@@ -87,16 +87,117 @@ end
 %NO TEMPO {Amplitude Maxima, Amplitude Media, Desvio Padrão}
 %NA FREQUENCIA {%Kurtoise, Skewness, maximo, media, mediana
 %Logo, vamos construir nossa base de dados
-dados(:,1) = AmpMax;
-dados(:,2) = AmpMedia;
-dados(:,3) = DesvioAmp;
-dados(:,4) = kurt;
-dados(:,5) = skew;
-dados(:,6) = ModuloFurrier;
-dados(1:50,7) = MediaFurrier1;
-dados(51:100,7) = MediaFurrier2(51:end);
-dados(1:50,8) = MedianaFurrier1;
-dados(51:100,8) = MedianaFurrier2(51:end);
+% dados(:,1) = AmpMax;
+% dados(:,2) = AmpMedia;
+% dados(:,3) = DesvioAmp;
+dados(:,1) = kurt;
+% dados(:,5) = skew;
+dados(:,2) = ModuloFurrier;
+% dados(1:50,7) = MediaFurrier1;
+% dados(51:100,7) = MediaFurrier2(51:end);
+% dados(1:50,8) = MedianaFurrier1;
+% dados(51:100,8) = MedianaFurrier2(51:end);
 classes(1:50) = dataset(1:50,end);
 classes(51:100) = dataset(51:end,end);
 
+%k-Fold
+kfold=10;
+disp('Matriz confusão da classificação do Nearest Prototype com K-Fold')
+for i=1:kfold
+    [~,numAtributos] = size(dados);
+    acertos1 = 0;
+    erros1 = 0;
+    acertos2 = 0;
+    erros2 = 0;
+    for t=1:length(dados)/kfold %asmostras (Testes)
+        dadosAux = dados;
+        classeAux = classes;
+        %pega as amostras de teste
+        Teste(1:length(dados)/(2*kfold),:)=dadosAux(1+(i-1)*length(dados)/(2*kfold):i*length(dados)/(2*kfold),:);
+        classeTeste(1:length(dados)/(2*kfold))=classes(1+(i-1)*length(dados)/(2*kfold):i*length(dados)/(2*kfold));
+        Teste(length(dados)/(2*kfold)+1:length(dados)/kfold,:)=dadosAux(51+(i-1)*length(dados)/(2*kfold):50+i*length(dados)/(2*kfold),:);
+        classeTeste(length(dados)/(2*kfold)+1:length(dados)/kfold)=classes(51+(i-1)*length(dados)/(2*kfold):50+i*length(dados)/(2*kfold));
+    
+        %pega as amostras de treino
+        dadosAux(1+(i-1)*length(dados)/(2*kfold):i*length(dados)/(2*kfold),:)=[];
+        classeAux(1+(i-1)*length(dados)/(2*kfold):i*length(dados)/(2*kfold))=[];
+        dadosAux(51+(i-1)*length(dados)/(2*kfold)-length(dados)/(2*kfold):50+i*length(dados)/(2*kfold)-length(dados)/(2*kfold),:)=[];
+        classeAux(51+(i-1)*length(dados)/(2*kfold)-length(dados)/(2*kfold):50+i*length(dados)/(2*kfold)-length(dados)/(2*kfold))=[];
+        d1=0;
+        d2=0;
+        %Vamos obter as coordenadas do centroide
+        for q=1:numAtributos
+            dadosCentrais(1,q) = mean(dadosAux(1:length(dadosAux)/2,q));
+            dadosCentrais(2,q) = mean(dadosAux(length(dadosAux)/2+1:length(dadosAux),q));
+            d1 = d1 + (Teste(t,q) - dadosCentrais(1,q))^2;
+            d2 = d2 + (Teste(t,q) - dadosCentrais(2,q))^2;
+        end
+        %verificacao dos testes
+        if(d1 < d2 && classeTeste(t) == 1) %caso acerte um teste da classe real 1
+            acertos1 = acertos1 + 1; %acrescentamos acertos1
+        end
+        if(d1 > d2 && classeTeste(t) == 2) %caso acerte um teste da classe real 2
+            acertos2 = acertos2 + 1; %acrescentamos acertos2
+        end
+        if(d1 > d2 && classeTeste(t) == 1) %caso erre um teste da classe real 1
+            erros1 = erros1 + 1; %acrescentamos erros1
+        end
+        if(d1 < d2 && classeTeste(t) == 2) %caso erre um teste da classe real 2
+            erros2 = erros2 + 1; %acrescentamos erros2
+        end
+    end
+    %Matriz de confusão: 
+    %Elemento 11 mostra o numero de vez que o algoritmo disse ser a classe 1, e de fato era a classe 1.
+    %Elemento 12 mostra o numero de vez que o algoritmo disse ser a classe 2, e era a classe 1.
+    %Elemento 21 mostra o numero de vez que o algoritmo disse ser a classe 1, e era a classe 2.
+    %Elemento 22 mostra o numero de vez que o algoritmo disse ser a classe 2, e de fato era a classe 2.
+    [acertos1 erros1; erros2 acertos2]
+end
+
+%Leave-one-out
+acertos1 = 0;
+erros1 = 0;
+acertos2 = 0;
+erros2 = 0;
+disp('Matriz confusão da classificação do Nearest Prototype com K-Fold')
+for t=1:length(dados) %asmostras (Testes)
+    dadosAux = dados;
+    classeAux = classes;
+    
+    %pega a amostra de teste
+    Teste = dadosAux(t,:);
+    classeTeste = classes(t);
+         
+    %pega as amostras de treino
+    dadosAux(t,:)=[];
+    classeAux(t)=[];
+    d1=0;
+    d2=0;
+    %Vamos obter as coordenadas do centroide
+    for q=1:numAtributos
+        dadosCentrais(1,q) = mean(dadosAux(1:floor(length(dadosAux)/2),q));
+        dadosCentrais(2,q) = mean(dadosAux(ceil(length(dadosAux)/2)+1:length(dadosAux),q));
+        d1 = d1 + (Teste(q) - dadosCentrais(1,q))^2;
+        d2 = d2 + (Teste(q) - dadosCentrais(2,q))^2;
+    end
+    %verificacao dos testes
+    if(d1 < d2 && classeTeste == 1) %caso acerte um teste da classe real 1
+        acertos1 = acertos1 + 1; %acrescentamos acertos1
+    end
+    if(d1 > d2 && classeTeste == 2) %caso acerte um teste da classe real 2
+        acertos2 = acertos2 + 1; %acrescentamos acertos2
+    end
+    if(d1 > d2 && classeTeste == 1) %caso erre um teste da classe real 1
+        erros1 = erros1 + 1; %acrescentamos erros1
+    end
+    if(d1 < d2 && classeTeste == 2) %caso erre um teste da classe real 2
+        erros2 = erros2 + 1; %acrescentamos erros2
+    end
+
+    %Matriz de confusão: 
+    %Elemento 11 mostra o numero de vez que o algoritmo disse ser a classe 1, e de fato era a classe 1.
+    %Elemento 12 mostra o numero de vez que o algoritmo disse ser a classe 2, e era a classe 1.
+    %Elemento 21 mostra o numero de vez que o algoritmo disse ser a classe 1, e era a classe 2.
+    %Elemento 22 mostra o numero de vez que o algoritmo disse ser a classe 2, e de fato era a classe 2.
+end
+[acertos1 erros1; erros2 acertos2]
