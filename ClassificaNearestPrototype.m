@@ -100,7 +100,8 @@ dados(:,2) = ModuloFurrier;
 classes(1:50) = dataset(1:50,end);
 classes(51:100) = dataset(51:end,end);
 
-%k-Fold
+%k-Fold (Para 5 e 10, o caso k=100 eh implementado pelo codigo do
+%leave-one-out)
 kfold=10;
 disp('Matriz confusão da classificação do Nearest Prototype com K-Fold')
 for i=1:kfold
