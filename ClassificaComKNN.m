@@ -13,20 +13,27 @@ load('Classe1.mat')
 load('Classe2.mat')
 Y1 = Classe1';
 Y2 = Classe2';
-dataset = ones(100,501);
-dataset(1:50,1:end-1) = Y1;
-dataset(51:end,1:end-1) = Y2;
-
-%atribui o rotulo de cada classe2
-dataset(51:end,end) = 2;
-
-%Estudo dos dados
 
 %Plotagem dos dados
 plot(Y1, 'r')
 hold on
 plot(Y2, 'b')
 hold off
+
+%Normaliza os sinais no tempo (media = 0 e variança = 1)
+for i=1:50
+    Y1(i,:) = (Y1(i,:) - mean(Y1(i,:)))/std(Y1(i,:));
+    Y2(i,:) = (Y2(i,:) - mean(Y2(i,:)))/std(Y2(i,:));
+end
+
+%Constroi o dataset
+dataset = ones(100,501);
+dataset(1:50,1:end-1) = Y1;
+dataset(51:end,1:end-1) = Y2;
+%atribui o rotulo de cada classe2
+dataset(51:end,end) = 2;
+
+%Estudo dos dados
 
 %Amplitude Maxima do sinal no tempo
 %Amplitude Media do sinal no tempo
@@ -87,16 +94,16 @@ end
 %NO TEMPO {Amplitude Maxima, Amplitude Media, Desvio Padrão}
 %NA FREQUENCIA {%Kurtoise, Skewness, maximo, media, mediana
 %Logo, vamos construir nossa base de dados
-dados(:,1) = AmpMax;
-dados(:,2) = AmpMedia;
-dados(:,3) = DesvioAmp;
-dados(:,4) = kurt;
-dados(:,5) = skew;
-dados(:,6) = ModuloFurrier;
-dados(1:50,7) = MediaFurrier1;
-dados(51:100,7) = MediaFurrier2(51:end);
-dados(1:50,8) = MedianaFurrier1;
-dados(51:100,8) = MedianaFurrier2(51:end);
+dados(:,1) = AmpMax/max(AmpMax);
+dados(:,2) = AmpMedia/max(AmpMedia);
+dados(:,3) = DesvioAmp/max(DesvioAmp);
+dados(:,4) = kurt/max(kurt);
+dados(:,5) = skew/max(skew);
+dados(:,6) = ModuloFurrier/max(ModuloFurrier);
+dados(1:50,7) = MediaFurrier1/max(MediaFurrier1);
+dados(51:100,7) = MediaFurrier2(51:end)/max(MediaFurrier2(51:end));
+dados(1:50,8) = MedianaFurrier1/max(MedianaFurrier1);
+dados(51:100,8) = MedianaFurrier2(51:end)/max(MediaFurrier2(51:end));
 classes(1:50) = dataset(1:50,end);
 classes(51:100) = dataset(51:end,end);
 
