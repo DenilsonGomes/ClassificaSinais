@@ -178,8 +178,8 @@ for t=1:length(dados) %asmostras (Testes)
     for q=1:numAtributos
         dadosCentrais(1,q) = mean(dadosAux(1:floor(length(dadosAux)/2),q));
         dadosCentrais(2,q) = mean(dadosAux(ceil(length(dadosAux)/2)+1:length(dadosAux),q));
-        d1 = d1 + (Teste(q) - dadosCentrais(1,q))^2;
-        d2 = d2 + (Teste(q) - dadosCentrais(2,q))^2;
+        d1 = d1 + (Teste(q) - dadosCentrais(1,q))^2; %calcula a distancia pro centroide da classe 1
+        d2 = d2 + (Teste(q) - dadosCentrais(2,q))^2; %calcula a distancia pro centroide da classe 2
     end
     %verificacao dos testes
     if(d1 < d2 && classeTeste == 1) %caso acerte um teste da classe real 1
