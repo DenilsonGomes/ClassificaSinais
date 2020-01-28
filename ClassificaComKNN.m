@@ -15,7 +15,7 @@ Y1 = Classe1';
 Y2 = Classe2';
 
 %Plotagem dos dados
-plot(Y1, 'r')
+figure, plot(Y1, 'r')
 hold on
 plot(Y2, 'b')
 hold off
@@ -34,6 +34,26 @@ dataset(51:end,1:end-1) = Y2;
 dataset(51:end,end) = 2;
 
 %Estudo dos dados
+
+% Calcular Kurtoise e Skewness no tempo
+for i=1:100   
+    skew(i) = (sum((dataset(i,:)-mean(dataset(i,:))).^3)./length(dataset(i,:)))./ (var(dataset(i,:),1).^1.5);
+    kurt(i) = (sum((dataset(i,:)-mean(dataset(i,:))).^4)./length(dataset(i,:))) ./ (var(dataset(i,:),1).^2);
+end
+% Plotar skewness e Kurtoise das duas classes
+% Skewness
+figure, plot(skew(1:50), 'b')
+hold on
+plot(skew(51:100), 'r')
+hold off
+title('Skewness')
+
+% Kurtoise
+figure, plot(kurt(1:50), 'b')
+hold on
+plot(kurt(51:100), 'r')
+hold off
+title('Kurtoise')
 
 %Amplitude Maxima do sinal no tempo
 %Amplitude Media do sinal no tempo
@@ -91,25 +111,24 @@ end
 % MedianaFurrier2 = mean(MedianaFurrier(51:end))
 
 %Estes atributos serão usados na classificacao
-%NO TEMPO {Amplitude Maxima, Amplitude Media, Desvio Padrão}
-%NA FREQUENCIA {%Kurtoise, Skewness, maximo, media, mediana
+%NO TEMPO {%Kurtoise, Skewness}
 %Logo, vamos construir nossa base de dados
-dados(:,1) = AmpMax/max(AmpMax);
-dados(:,2) = AmpMedia/max(AmpMedia);
-dados(:,3) = DesvioAmp/max(DesvioAmp);
-dados(:,4) = kurt/max(kurt);
-dados(:,5) = skew/max(skew);
-dados(:,6) = ModuloFurrier/max(ModuloFurrier);
-dados(1:50,7) = MediaFurrier1/max(MediaFurrier1);
-dados(51:100,7) = MediaFurrier2(51:end)/max(MediaFurrier2(51:end));
-dados(1:50,8) = MedianaFurrier1/max(MedianaFurrier1);
-dados(51:100,8) = MedianaFurrier2(51:end)/max(MediaFurrier2(51:end));
+dados(:,1) = kurt;
+% dados(:,1) = skew;
+% dados(:,3) = DesvioAmp/max(DesvioAmp);
+% dados(:,4) = kurt/max(kurt);
+% dados(:,5) = skew/max(skew);
+% dados(:,6) = ModuloFurrier/max(ModuloFurrier);
+% dados(1:50,7) = MediaFurrier1/max(MediaFurrier1);
+% dados(51:100,7) = MediaFurrier2(51:end)/max(MediaFurrier2(51:end));
+% dados(1:50,8) = MedianaFurrier1/max(MedianaFurrier1);
+% dados(51:100,8) = MedianaFurrier2(51:end)/max(MediaFurrier2(51:end));
 classes(1:50) = dataset(1:50,end);
 classes(51:100) = dataset(51:end,end);
 
 %k-Fold (para k=5 e k=10)
 kfold=5;
-kvizinhos = 10;
+kvizinhos = 3;
 disp('Matriz confusão da classificação do KNN com K-Fold')
 for i=1:kfold
     [~,numAtributos] = size(dados);
@@ -151,16 +170,16 @@ for i=1:kfold
         end
         %verificamos se a classe que ocorre em maior numero eh a classe
         %real do teste
-        if((mode(knn) == classeTeste(t)) && classeTeste(t) == 1) %caso acerte um teste da classe real 1
+        if(mode(knn) == classeTeste(t) && classeTeste(t) == 1) %caso acerte um teste da classe real 1
             acertos1 = acertos1 + 1; %acrescentamos acertos1
         end
-        if((mode(knn) == classeTeste(t)) && classeTeste(t) == 2) %caso acerte um teste da classe real 2
+        if(mode(knn) == classeTeste(t) && classeTeste(t) == 2) %caso acerte um teste da classe real 2
             acertos2 = acertos2 + 1; %acrescentamos acertos2
         end
-        if((mode(knn) ~= classeTeste(t)) && classeTeste(t) == 1) %caso erre um teste da classe real 1
+        if(mode(knn) ~= classeTeste(t) && classeTeste(t) == 1) %caso erre um teste da classe real 1
             erros1 = erros1 + 1; %acrescentamos erros1
         end
-        if((mode(knn) ~= classeTeste(t)) && classeTeste(t) == 2) %caso erre um teste da classe real 2
+        if(mode(knn) ~= classeTeste(t) && classeTeste(t) == 2) %caso erre um teste da classe real 2
             erros2 = erros2 + 1; %acrescentamos erros2
         end
     end
@@ -173,12 +192,12 @@ for i=1:kfold
 end
 
 %leave-one-out
-kvizinhos = 10;
+kvizinhos = 3;
 acertos1 = 0;
 erros1 = 0;
 acertos2 = 0;
 erros2 = 0;
-disp('Matriz confusão da classificação do Nearest Prototype com leave-on-out')
+disp('Matriz confusão da classificação do KNN com leave-on-out')
 for t=1:length(dados) %asmostras (Testes)
     dadosAux = dados;
     classeAux = classes;
@@ -187,7 +206,7 @@ for t=1:length(dados) %asmostras (Testes)
     Teste = dadosAux(t,:);
     classeTeste = classes(t);
          
-    %pega as amostras de treino
+    %pega as amostras de treino (retira a de teste)
     dadosAux(t,:)=[];
     classeAux(t)=[];
     for j=1:length(dadosAux) %asmostras (Treinamento)
@@ -203,19 +222,18 @@ for t=1:length(dados) %asmostras (Testes)
      for m=1:kvizinhos %para os k-vizinhos mais perto da amostra t
         [~,indice] = min(dist); %pegamos o indice do vizinho mais proximo
         knn(m) = classeAux(indice); %colocamos a classe desta amostra em knn
-        dist(indice) = []; %removemos esta amostra
+        dist(indice) = []; %removemos esta distancia
         dadosAux(indice,:) = []; %removemos esta amostra
         classeAux(indice) = []; %removemos a classe da amostra retirada (questao de dimensionamento)
      end
-     %verificamos se a classe que ocorre em maior numero eh a classe
-     %real do teste
+     %verificamos se a classe que ocorre em maior numero eh a classe real do teste
      if(mode(knn) == classeTeste && classeTeste == 1) %caso acerte um teste da classe real 1
         acertos1 = acertos1 + 1; %acrescentamos acertos1
      end
      if(mode(knn) == classeTeste && classeTeste == 2) %caso acerte um teste da classe real 2
         acertos2 = acertos2 + 1; %acrescentamos acertos2
      end
-     if(mode(knn) ~= classeTeste &&classeTeste == 1) %caso erre um teste da classe real 1
+     if(mode(knn) ~= classeTeste && classeTeste == 1) %caso erre um teste da classe real 1
         erros1 = erros1 + 1; %acrescentamos erros1
      end
      if(mode(knn) ~= classeTeste && classeTeste == 2) %caso erre um teste da classe real 2
